@@ -17,7 +17,7 @@ class App extends Component {
 
   constructor(props) {
     super(props)
-    this.state = { title: '', author: '', bookList: [] , apiKey: localStorage.getItem('apiKey')}
+    this.state = { title: '', author: '', bookList: []  , apiKey: localStorage.getItem('apiKey')}
     
 
     this.fillBookList = this.fillBookList.bind(this)
@@ -51,26 +51,28 @@ class App extends Component {
     }
   }
 
- 
-
-  submitHandler(e) {
+  submitHandler(e, timer = 10) {
     e.preventDefault()
+    e.persist()
     const key = localStorage.getItem('apiKey')
     if (key) {
       this.request(`key=${this.state.apiKey}op=insert&title=${this.state.title}&author=${this.state.author}`, function (data) {
       })
     } else {
-      function getApiKey(key) { this.request(url + `requestKey`, function (data) { }) }
+     // function getApiKey(key) { this.request(url + `requestKey`, function (data) { }) }
     }
     fetch(url + 'key='+ this.state.apiKey + qsSet + `&title=${this.state.title}&author=${this.state.author}`)
       .then(function (response) { return response.json() })
       .then((data) => {
         if (data.status === 'success') {
           this.setState({ bookList: [...this.state.bookList, { id: data.id, title: this.state.title, author: this.state.author }] })
+          console.log(data)
         }
-        else {
-          
+        else if(data.status === 'error' && timer >0) {
+          this.submitHandler(e, timer -1)
+          console.log(data)
         }
+        
       })
   }
 
@@ -85,7 +87,7 @@ class App extends Component {
   async request(qsGet, cb, limit = 10) {
     const key = await this.requestApiKey()
     console.log(key)
-    fetch(url + `key=` + key + qsGet).then(function (response) { return response.json() }).then(({ data }) => {
+    fetch(url + `key=` + key + qsGet).then(function (response) { return response.text() }).then(({ data }) => {
       console.log(data)
       if (data) {
         if (cb) {
@@ -95,7 +97,7 @@ class App extends Component {
       } else if (limit > 0) {
         this.request(qsGet, cb, limit - 1)
       } else {
-        console.log(data.message)
+        console.log(data)
       }
     })
   }
